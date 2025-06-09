@@ -1,6 +1,6 @@
 # .github/workflows/ci-cd.yml
 
-name: CI/CD Pipeline
+name: Django CI/CD Workflow
 
 on:
   push:
@@ -14,25 +14,96 @@ on:
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
-  # --- Build Stage ---
- build-nginx-setup:
-    name: Job 3 of Build - Setup Nginx Server
+  build-django-app:
+    name: Build and Install Django Application
+    runs-on: ubuntu-latest # Uses the latest Ubuntu runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Action to check out your repository code
+
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Action to set up a Python environment
+        with:
+          python-version: '3.9' # Specify your desired Python version (e.g., 3.8, 3.9, 3.10)
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip # Upgrade pip
+          pip install Django # Install Django
+          # If you have a requirements.txt file, uncomment and use the line below:
+          # pip install -r requirements.txt
+
+      - name: Run Django migrations (optional)
+        # This step runs database migrations. Adjust 'your_project_name' to your Django project's name.
+        # Ensure your settings are configured for a SQLite database or a test database.
+        run: |
+          python manage.py migrate
+        working-directory: ./your_django_project_root # Adjust if manage.py is not in the root
+
+      - name: Collect static files (optional)
+        # This step collects static files, useful for deployment or further testing.
+        run: |
+          python manage.py collectstatic --noinput
+        working-directory: ./your_django_project_root # Adjust if manage.py is not in the root
+
+      - name: Archive Django application (optional)
+        # Creates a tarball of your application for easy transfer between jobs or deployment
+        run: tar -czvf django_app.tar.gz .
+        # The path here depends on what you want to archive.
+        # If your Django project is in a subfolder, adjust the 'path' in upload-artifact.
+
+      - name: Upload Django app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: django-app-build # Name of the artifact
+          path: . # Path to the directory or file to upload (e.g., './django_app.tar.gz' or './your_django_project_root/')
+
+
+  test-django-reachability:
+    name: Test Django Application Reachability
     runs-on: ubuntu-latest
+    needs: build-django-app # This job will run after 'build-django-app' completes successfully
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Nginx
+      - name: Download Django app artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: django-app-build
+          path: . # Downloads the artifact to the current directory
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y nginx
+          python -m pip install --upgrade pip
+          pip install Django
+          # If you have a requirements.txt file, uncomment and use the line below:
+          # pip install -r requirements.txt
 
-      - name: Start Nginx service
-        run: sudo systemctl start nginx
+      - name: Start Django development server
+        # This starts the Django development server in the background.
+        # Ensure your project name is correct (e.g., 'your_django_project_root').
+        run: |
+          nohup python manage.py runserver 8000 &
+          sleep 5 # Give the server some time to start
+        working-directory: ./your_django_project_root # Adjust to your Django project's root directory
 
-      - name: Check Nginx status
-        run: sudo systemctl status nginx
+      - name: Check Django server reachability
+        # Uses curl to check if the Django server responds on port 8000
+        run: |
+          curl -v http://localhost:8000/ # Adjust the URL if your Django app has a specific base path
+          # You might want to add more robust checks here, like:
+          # curl -f http://localhost:8000/ || (echo "Django server not reachable!"; exit 1)
 
-
- 
+      - name: Stop Django development server (cleanup)
+        if: always() # Ensures this step runs even if previous steps fail
+        run: |
+          # Find and kill the Django server process
+          kill $(lsof -t -i:8000) || true # '|| true' prevents error if process not found
