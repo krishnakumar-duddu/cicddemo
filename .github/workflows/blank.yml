@@ -15,19 +15,24 @@ on:
 
 jobs:
   # --- Build Stage ---
-  build-job1:
-    name: Job 1 of Build - Build Application
+ build-nginx-setup:
+    name: Job 3 of Build - Setup Nginx Server
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo 'This is job 1 of build'
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Install Nginx
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nginx
 
-  build-job2:
-    name: Job 2 of Build - Lint and Static Analysis
-    runs-on: ubuntu-latest
+      - name: Start Nginx service
+        run: sudo systemctl start nginx
 
-    steps:
-      - run: echo 'This is job 1 of build'
+      - name: Check Nginx status
+        run: sudo systemctl status nginx
+
 
  
