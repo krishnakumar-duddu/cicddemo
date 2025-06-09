@@ -1,0 +1,33 @@
+# .github/workflows/ci-cd.yml
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  # --- Build Stage ---
+  build-job1:
+    name: Job 1 of Build - Build Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo 'This is job 1 of build'
+
+
+  build-job2:
+    name: Job 2 of Build - Lint and Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo 'This is job 1 of build'
+
+ 
