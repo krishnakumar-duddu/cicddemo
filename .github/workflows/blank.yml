@@ -34,22 +34,22 @@ jobs:
           # If you have a requirements.txt file, uncomment and use the line below:
           # pip install -r requirements.txt
 
-      - name: Run Django migrations (optional)
+ #     - name: Run Django migrations (optional)
         # This step runs database migrations. Adjust 'your_project_name' to your Django project's name.
         # Ensure your settings are configured for a SQLite database or a test database.
-        run: |
-          python manage.py migrate
-        working-directory: ./your_django_project_root # Adjust if manage.py is not in the root
+ #       run: |
+ #         python manage.py migrate
+ #       working-directory: ./your_django_project_root # Adjust if manage.py is not in the root
 
-      - name: Collect static files (optional)
+ #    - name: Collect static files (optional)
         # This step collects static files, useful for deployment or further testing.
-        run: |
-          python manage.py collectstatic --noinput
-        working-directory: ./your_django_project_root # Adjust if manage.py is not in the root
+ #       run: |
+ #         python manage.py collectstatic --noinput
+ #       working-directory: ./your_django_project_root # Adjust if manage.py is not in the root
 
-      - name: Archive Django application (optional)
+ #     - name: Archive Django application (optional)
         # Creates a tarball of your application for easy transfer between jobs or deployment
-        run: tar -czvf django_app.tar.gz .
+ #       run: tar -czvf django_app.tar.gz .
         # The path here depends on what you want to archive.
         # If your Django project is in a subfolder, adjust the 'path' in upload-artifact.
 
