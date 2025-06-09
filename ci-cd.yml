@@ -1,0 +1,29 @@
+stages:   # Dictionary
+ - build   # this is build stage
+ - test    # this is test stage
+ - integration # this is an integration stage
+ - prod       # this is prod/production stage
+
+build:       # this is job named build, it can be anything, job1, job2, etc.,
+  stage: build    # this job belongs to the build stage. Here both job name and stage name is the same i.e., build
+  script:
+    - echo "This is a build step"  # We are running an echo command, but it can be any command.
+
+test:
+  stage: test
+  script:
+    - echo "This is a test step."
+    - docker run -i -v $(pwd):/app alpine sh -c "echo '{\"vulnerability\":\"XSS Injection\"}' > /app/vulnerabilities.json" # make an output file created in /app path
+  artifacts:      # notice a new tag artifacts
+    paths: [vulnerabilities.json]   # this is the path to the vulnerabilities.json file in the local CI/CD machine
+  allow_failure: true   #<--- allow the build to fail but don't mark it as such
+
+integration:        # integration job under stage integration.
+  stage: integration
+  script:
+    - echo "This is an integration step."
+
+prod:
+  stage: prod
+  script:
+    - echo "This is a deploy step."
