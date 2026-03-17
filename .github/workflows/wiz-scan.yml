@@ -21,15 +21,13 @@ jobs:
           chmod +x wizcli
           # Optional: Move to path
           sudo mv wizcli /usr/local/bin/wizcli
-
       - name: Authenticate to Wiz
         run: wizcli iac scan --path tfplan1.json  --format json > wiz-scan-results.json
         env:
           WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
-
       - name: Upload Wiz Scan Results
-        uses: [actions/upload-artifact@v4](https://github.com/actions/upload-artifact)
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: wiz-iac-report
