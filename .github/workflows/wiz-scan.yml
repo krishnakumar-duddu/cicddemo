@@ -23,11 +23,9 @@ jobs:
           sudo mv wizcli /usr/local/bin/wizcli
 
       - name: Authenticate to Wiz
-        run: wizcli iac scan --path tfplan1.json 
+        run: wizcli iac scan --path tfplan1.json  --format json > wiz-scan-results.json
         env:
           WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
 
-      - name: Run Wiz Directory Scan
-        # Scans the current directory for IaC, secrets, and vulnerabilities
-        run: wizcli iac scan --path tfplan1.json 
+  
