@@ -1,95 +1,33 @@
-name: Wiz Scan
+name: "Wiz CLI Scan"
 
 on:
-  pull_request:
   push:
-    branches: [ main ]
-
-permissions:
-  contents: read
-  # If you later want to upload SARIF or comment on PRs, grant only what you need.
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   wiz-scan:
-    name: Run Wiz CLI scans
+    name: Wiz Security Scan
     runs-on: ubuntu-latest
-
-    env:
-      WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
-      WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
-      # Optional: pin a specific Wiz API endpoint if your tenant requires it
-      # WIZ_API_ENDPOINT_URL: https://api.us19.app.wiz.io/graphql
-
+    
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # --- Install Wiz CLI (download the latest from Wiz) ---
       - name: Download Wiz CLI
-        shell: bash
         run: |
-          set -euo pipefail
-          WIZ_DIR="${HOME}/.wiz"
-          mkdir -p "$WIZ_DIR"
-          # Download the latest Wiz CLI (Linux x64) as documented by Wiz
-          # (Wiz distributes a tar.gz that contains the 'wizcli' binary).
-          curl -fsSL "https://wizcli.app.wiz.io/wizcli-linux-amd64.tar.gz" -o /tmp/wizcli.tgz
-          tar -xzf /tmp/wizcli.tgz -C "$WIZ_DIR"
-          chmod +x "$WIZ_DIR/wizcli"
-          echo "$WIZ_DIR" >> "$GITHUB_PATH"
+          curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64
+          chmod +x wizcli
+          # Optional: Move to path
+          sudo mv wizcli /usr/local/bin/wizcli
 
-      # --- Authenticate Wiz CLI (uses service account secrets) ---
-      - name: Wiz CLI auth (service account)
-        shell: bash
-        run: |
-          set -euo pipefail
-          wizcli auth --id "$WIZ_CLIENT_ID" --secret "$WIZ_CLIENT_SECRET"
+      - name: Authenticate to Wiz
+        run: wizcli auth --id "$WIZ_CLIENT_ID" --secret "$WIZ_CLIENT_SECRET"
+        env:
+          WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
+          WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
 
-      # --- Scan the repository (Code/IaC/Secrets) and fail on policy violation ---
-      - name: Directory scan (repo)
-        shell: bash
-        run: |
-          set -euo pipefail
-          # --path . scans current repo
-          # --policy fail the build on CI/CD policy violations configured in Wiz
-          wizcli dir scan \
-            --path . \
-            --name "${{ github.repository }}@${{ github.ref_name }}" \
-            --fail
-
-      # --- OPTIONAL: Build & scan your container image ---
-      # Comment out these steps if you don't build images here.
-      - name: Build container image
-        if: always()  # or remove if not needed
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker build -t app:${{ github.sha }} .
-
-      - name: Image scan (container)
-        if: always()  # or remove if not needed
-        shell: bash
-        run: |
-          set -euo pipefail
-          wizcli image scan \
-            --image "app:${{ github.sha }}" \
-            --name "${{ github.repository }}:${{ github.sha }}" \
-            --fail
-
-      # --- OPTIONAL: Save a local JSON report artifact for triage ---
-      - name: Export latest report (JSON) and upload artifact
-        if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          # Pulls the last scan’s JSON; you can also specify --scan-id explicitly.
-          wizcli report export --format json > out/wiz-report.json || true
-        continue-on-error: true
-
-      - name: Upload report artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: wiz-report
-          path: out/wiz-report.json
+      - name: Run Wiz Directory Scan
+        # Scans the current directory for IaC, secrets, and vulnerabilities
+        run: wizcli iac scan --path tfplan1.json 
