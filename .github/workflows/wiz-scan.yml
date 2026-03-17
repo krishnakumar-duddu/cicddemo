@@ -23,7 +23,7 @@ jobs:
           sudo mv wizcli /usr/local/bin/wizcli
 
       - name: Authenticate to Wiz
-        run: wizcli auth --id "$WIZ_CLIENT_ID" --secret "$WIZ_CLIENT_SECRET"
+        run: wizcli iac scan --path tfplan1.json 
         env:
           WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
