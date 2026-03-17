@@ -33,6 +33,6 @@ jobs:
         if: always()
         with:
           name: wiz-iac-report
-          path: wiz-scan-results.json
+          path: .
 
   
